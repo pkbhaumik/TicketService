@@ -125,20 +125,52 @@ CREATE PROCEDURE HoldSeats
 	@email varchar(128)
 AS
 BEGIN
-	DECLARE @seatsAvailable int
+	DECLARE @seatsAvailable int;
+	DECLARE @seatHoldId int;
+	DECLARE @seatId int;
 	
-	SELECT COUNT(*) INTO @seatsAvailable
-	FROM [TS].[SeatMap]
-	WHERE 1 = 1
-		AND Status = 0
-		AND LevelId >= @minLevel 
-		AND LevelId <= @maxLevel;
-		
-	IF (@seatsAvailable >= @seatCount) 
-	BEGIN
-		
-	END 
+	BEGIN TRANSACTION
+		BEGIN TRY
+			SELECT COUNT(*) INTO @seatsAvailable
+			FROM [TS].[SeatMap]
+			WHERE 1 = 1
+				AND Status = 0
+				AND LevelId >= @minLevel 
+				AND LevelId <= @maxLevel;
+			
+			IF (@seatsAvailable >= @seatCount) 
+			BEGIN
+				INSERT INTO [TS].[HoldSeats](CustomerEmail, ExpiringAt) VALUES(@email, DATEADD(second, 300, CURRENT_TIMESTAMP));
+				SELECT SCOPE_IDENTITY() INTO @seatHoldId;
+				
+				WITH CT_SEATS AS
+				(
+					SELECT TOP (@seatCount) SeatId
+					FROM [TS].[SeatMap]
+					WHERE 1 = 1
+						AND Status = 0
+						AND LevelId >= @minLevel 
+						AND LevelId <= @maxLevel
+					ORDER BY SeatId, LevelId, RowNumber, SeatNumber
+				)
+				UPDATE [TS].[SeatMap] 
+					SET status = 1,
+						SeatHoldId = @seatHoldId
+				FROM [TS].[SeatMap] S
+				JOIN CT_SEATS CT ON (S.SeatId = CT.SeatId);
+			END 
+		END TRY
+	BEGIN CATCH
+		ROLLBACK;
+		RETURN
+	END CATCH
 	
+	COMMIT;
+	
+	SELECT SH.[SeatHoldId], SH.[SeatId], SH.[LevelId], SH.[RowNumber], SH.[SeatNumber]
+	FROM [TS].[HoldSeats] SH 
+	JOIN [TS].[SeatMap] SM ON (SM.[SeatHoldId] = SM.[SeatHoldId])
+	WHERE SH.[SeatHoldId] = @seatHoldId;
 END 
 GO
 
