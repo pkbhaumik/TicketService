@@ -14,9 +14,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import pb.ticket.service.repository.TicketServiceRepositoryImpl;
 import pb.ticketing.service.Settings;
 import pb.ticketing.service.model.SeatHold;
+import pb.ticketing.service.repository.TicketServiceRepositoryImpl;
 
 @CrossOrigin
 @RestController
