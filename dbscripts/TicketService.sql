@@ -108,6 +108,41 @@ BEGIN
 END
 GO
 
+/*
+ * 
+ * @seatCount input param - Number of seats to hold
+ * @minLevel input param - Minimum seating level
+ * @maxLevel input param - Maximum seating level
+ * @email input param - Customer email address
+ * 
+ * Hold @seatCount seats if available for the customer email.
+ * 
+ */
+CREATE PROCEDURE HoldSeats
+	@seatCount int,
+	@minLevel int,
+	@maxLevel int,
+	@email varchar(128)
+AS
+BEGIN
+	DECLARE @seatsAvailable int
+	
+	SELECT COUNT(*) INTO @seatsAvailable
+	FROM [TS].[SeatMap]
+	WHERE 1 = 1
+		AND Status = 0
+		AND LevelId >= @minLevel 
+		AND LevelId <= @maxLevel;
+		
+	IF (@seatsAvailable >= @seatCount) 
+	BEGIN
+		
+	END 
+	
+END 
+GO
+
+
 
 
 
