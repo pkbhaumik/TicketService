@@ -45,12 +45,17 @@ CREATE NONCLUSTERED INDEX IDX_SeatHold_CustomerEmail
 	INCLUDE (SeatHoldId, ExpiringAt);
 GO
 
+CREATE NONCLUSTERED INDEX IDX_SeatHold_Deleted 
+	ON [TS].[SeatHold] (SeatHoldId, Deleted);
+	
+GO
+
 CREATE TABLE [TS].[Reservation] 
 (
 	ReservationId INT IDENTITY (1,1) NOT NULL,
 	ConfirmationId VARCHAR(30) NOT NULL,
 	CustomerEmail varchar(128) NOT NULL,
-	TotalPaid decimal(5,2) NOT NULL,
+	TotalPaid decimal(7,2) NOT NULL,
 	ReservedTime DateTime2 NOT NULL,
 	Cancelled BIT NOT NULL DEFAULT(0),
 	CancelledTime DateTime2,
@@ -131,7 +136,7 @@ BEGIN
 	
 	BEGIN TRANSACTION
 		BEGIN TRY
-			SELECT COUNT(*) INTO @seatsAvailable
+			SELECT @seatsAvailable = COUNT(*)
 			FROM [TS].[SeatMap]
 			WHERE 1 = 1
 				AND Status = 0
@@ -140,8 +145,8 @@ BEGIN
 			
 			IF (@seatsAvailable >= @seatCount) 
 			BEGIN
-				INSERT INTO [TS].[HoldSeats](CustomerEmail, ExpiringAt) VALUES(@email, DATEADD(second, 300, CURRENT_TIMESTAMP));
-				SELECT SCOPE_IDENTITY() INTO @seatHoldId;
+				INSERT INTO [TS].[SeatHold](CustomerEmail, ExpiringAt) VALUES(@email, DATEADD(second, 300, CURRENT_TIMESTAMP));
+				SELECT @seatHoldId = SCOPE_IDENTITY();
 				
 				WITH CT_SEATS AS
 				(
@@ -167,12 +172,68 @@ BEGIN
 	
 	COMMIT;
 	
-	SELECT SH.[SeatHoldId], SH.[SeatId], SH.[LevelId], SH.[RowNumber], SH.[SeatNumber]
-	FROM [TS].[HoldSeats] SH 
+	SELECT SH.[SeatHoldId], SM.[SeatId], SM.[LevelId], SM.[RowNumber], SM.[SeatNumber]
+	FROM [TS].[SeatHold] SH 
 	JOIN [TS].[SeatMap] SM ON (SM.[SeatHoldId] = SM.[SeatHoldId])
 	WHERE SH.[SeatHoldId] = @seatHoldId;
 END 
 GO
+
+/*
+*
+*
+*/
+CREATE PROCEDURE ReserveSeats 
+	@seatHoldId int,
+	@email varchar(128),
+	@confirmationId varchar(30),
+	@paid DECIMAL(7, 2)
+AS
+BEGIN
+	DECLARE @diff int
+	DECLARE @reservationId int
+	
+	SELECT @diff = DATEDIFF(second, [ExpiringAt], CURRENT_TIMESTAMP)
+	FROM [TS].[SeatHold]
+	WHERE 1 = 1
+		AND [SeatHoldId] = @seatHoldId
+		AND [Deleted] = 0;
+
+	IF @diff IS NOT NULL AND @diff >= 0
+	BEGIN TRANSACTION;
+	BEGIN TRY
+		INSERT INTO [TS].[Reservation]([ConfirmationId], [CustomerEmail], [TotalPaid], [ReservedTime])
+			VALUES(@confirmationId, @email, @paid, CURRENT_TIMESTAMP);
+
+		SELECT @reservationId = SCOPE_IDENTITY();
+
+		UPDATE [TS].[SeatMap]
+		SET [Status] = 2,
+			[SeatHoldId] = null,
+			[ReservationId] = @reservationId
+		WHERE [SeatHoldId] = @seatHoldId;
+
+		UPDATE [TS].[SeatHold]
+			SET [Deleted] = 1
+		WHERE [SeatHoldId] = @seatHoldId;
+
+		COMMIT TRANSACTION ;
+
+		RETURN SELECT @reservationId;
+
+	END TRY
+
+	BEGIN CATCH
+		ROLLBACK TRANSACTION;
+	END CATCH
+END
+
+GO
+
+
+
+
+
 
 
 
