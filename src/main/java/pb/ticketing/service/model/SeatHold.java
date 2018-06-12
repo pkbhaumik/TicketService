@@ -44,6 +44,10 @@ public class SeatHold implements Serializable {
 		this.seatshold.addAll(seatsHold);
 	}
 	
+	public void addSeatHold(SeatInformation seatInfo) {
+		this.seatshold.add(seatInfo);
+	}
+	
 	public int getNumSeats() {
 		return this.numSeats;
 	}
