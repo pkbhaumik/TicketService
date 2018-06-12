@@ -87,6 +87,15 @@ CREATE NONCLUSTERED INDEX IDX_SeatMap_Status
 
 GO
 
+CREATE NONCLUSTERED INDEX IDX_SeatMap_SeatHoldId
+	ON [TS].[SeatMap] ([SeatHoldId]);
+GO
+
+CREATE NONCLUSTERED INDEX IDX_SeatMap_ReservationId
+	ON [TS].[SeatMap] ([ReservationId]);
+GO
+
+
 
 /*
 * Procedures
@@ -229,6 +238,23 @@ BEGIN
 END
 
 GO
+
+CREATE PROCEDURE ReleaseHold
+	@seatHoldId int
+AS
+BEGIN
+	IF EXISTS( SELECT [SeatHoldId] FROM [TS].[SeatHold] WHERE [SeatHoldId] = @seatHoldId AND [Deleted] = 0)
+	BEGIN
+		UPDATE [TS].[SeatHold]
+			SET [Deleted] = 1
+		WHERE [SeatHoldId] = @seatHoldId;
+
+		UPDATE [TS].[SeatMap]
+			SET [Status] = 0,
+				[SeatHoldId] = null
+		WHERE [SeatHoldId] = @seatHoldId;
+	END
+END
 
 
 
