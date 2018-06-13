@@ -2,7 +2,7 @@
 
 Spring Boot REST API Service to query, hold and reserve tickets.
 
-Send the ticket hold and reservation information to pb-ticket-db-service (Not Implemented yet).
+Send the ticket hold and reservation information to pb-ticket-db-service.
 
 ## Prequisite
 
@@ -29,13 +29,13 @@ mvn package
 
 ## Start the service
 
-If SQL Server is on local local machine and TCP/IP enabled and Database name is TicketService run the following command
+If SQL Server is on local local machine and TCP/IP enabled and Database name is TicketService and as well as Kafka in local machine run the following command
 
 ### java -Ddb.user.name={USER_NAME} -Ddb.user.password={PASSWORD} -jar pb-ticket-service-0.0.1-SNAPSHOT.jar
 
 Otherwise run the following command 
 
-### java -Ddb.server.name=127.0.0.1\\SQLEXPRESS -Ddb.database.name=TicketService -Ddb.user.name={USER_NAME} -Ddb.user.password={PASSWORD} -jar pb-ticket-service-0.0.1-SNAPSHOT.jar
+### java -Dkafka.brokers=127.0.0.1:9092 -Ddb.server.name=127.0.0.1\\SQLEXPRESS -Ddb.database.name=TicketService -Ddb.user.name={USER_NAME} -Ddb.user.password={PASSWORD} -jar pb-ticket-service-0.0.1-SNAPSHOT.jar
 
 Alternately application.properties file can be updated with all these values. Then just run the following command.
  

@@ -23,6 +23,7 @@ public class TicketServiceRepositoryImpl implements TicketService {
 	private static String LEVEL_ID_COLUMN = "LevelId";
 	private static String ROW_NUMBER_COLUMN = "RowNumber";
 	private static String SEAT_NUMBER_COLUMN = "SeatNumber";
+	private static String EXPIRING_AT_COLUMN = "ExpiringAt";
 
 	private final String connectionString;
 
@@ -89,7 +90,7 @@ public class TicketServiceRepositoryImpl implements TicketService {
 
 					if (rs != null && rs.next()) {
 						// Get the first record
-						SeatHold seatHold = new SeatHold(rs.getInt(SEAT_HOLD_COLUMN), numSeats);
+						SeatHold seatHold = new SeatHold(rs.getInt(SEAT_HOLD_COLUMN), numSeats, rs.getTimestamp(EXPIRING_AT_COLUMN).getTime());
 
 						do {
 							SeatInformation seatInfo = new SeatInformation(rs.getInt(SEAT_ID_COLUMN),

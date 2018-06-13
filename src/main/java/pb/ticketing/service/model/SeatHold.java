@@ -14,12 +14,14 @@ public class SeatHold implements Serializable {
 	
 	private final int seatHoldId;
 	private final int numSeats;
+	private final long expirationTime;
 	
 	private List<SeatInformation> seatshold;
 	
-	public SeatHold(int seatHoldId, int numSeats) {
+	public SeatHold(int seatHoldId, int numSeats, long expirationTime) {
 		this.seatHoldId = seatHoldId;
 		this.numSeats  = numSeats;
+		this.expirationTime = expirationTime;
 		this.seatshold = new ArrayList<SeatInformation>();
 	}
 	
@@ -50,5 +52,9 @@ public class SeatHold implements Serializable {
 	
 	public int getNumSeats() {
 		return this.numSeats;
+	}
+	
+	public long getExpiringAt() {
+		return this.expirationTime;
 	}
 }
