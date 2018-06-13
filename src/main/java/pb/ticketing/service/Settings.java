@@ -24,7 +24,7 @@ public final class Settings {
 		}
 
 
-		return String.format("jdbc:sqlserver://%s;databaseName=%s;user=%s;password=%s", databaseServer, databaseName, userName, password);
+		return String.format("jdbc:sqlserver://%s;databaseName=%s;user=%s;password=%s;Max Pool Size=50", databaseServer, databaseName, userName, password);
 	}
 	
 	public static Connection getSQLServerConnection(String sqlserverConenctionString) {
